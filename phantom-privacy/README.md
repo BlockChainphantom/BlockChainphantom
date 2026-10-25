@@ -11,6 +11,7 @@ stop handing out your real one, understand what you expose, and reduce it.
 | Command | What it does |
 | --- | --- |
 | `phone` | Guidance on protecting your phone number: why it matters, VoIP/masking numbers (MySudo and alternatives), SS7 awareness, and a checklist. |
+| `voip` | A side-by-side comparison table of VoIP / masking-number services. |
 | `footprint` | An interactive questionnaire that scores your privacy posture and gives prioritised recommendations. |
 | `scan` | A **defensive** nmap wrapper that audits *your own* network to show what services you expose. |
 
@@ -29,6 +30,7 @@ Run it as a module from inside the `phantom-privacy/` directory:
 
 ```bash
 python -m phantom_privacy phone
+python -m phantom_privacy voip
 python -m phantom_privacy footprint
 python -m phantom_privacy scan                 # scans 127.0.0.1 by default
 python -m phantom_privacy scan 192.168.1.0/24  # your own LAN

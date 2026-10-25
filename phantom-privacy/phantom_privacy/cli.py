@@ -33,6 +33,12 @@ def cmd_phone(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_voip(_args: argparse.Namespace) -> int:
+    print("VoIP / masking-number comparison\n")
+    print(phone_privacy.render_voip_table())
+    return 0
+
+
 def cmd_footprint(_args: argparse.Namespace) -> int:
     print("Answer a few questions to assess your privacy footprint.\n")
     answers: dict[str, bool] = {}
@@ -80,6 +86,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_phone = sub.add_parser("phone", help="Phone-number privacy guidance.")
     p_phone.set_defaults(func=cmd_phone)
+
+    p_voip = sub.add_parser("voip", help="Compare VoIP / masking-number services.")
+    p_voip.set_defaults(func=cmd_voip)
 
     p_fp = sub.add_parser("footprint", help="Assess your digital-footprint exposure.")
     p_fp.set_defaults(func=cmd_footprint)

@@ -100,3 +100,106 @@ def render(topics: list[Topic] | None = None) -> str:
             lines.append(f"  * {bullet}")
         lines.append("")  # blank line between topics
     return "\n".join(lines).rstrip() + "\n"
+
+
+# ---------------------------------------------------------------------------
+# VoIP / masking-number comparison
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class VoipService:
+    """One VoIP / masking-number option, described in comparable columns.
+
+    The fields are deliberately short strings so they line up in a table.
+    Features, pricing and availability change often, so treat this as a
+    starting point and verify the current details on each provider's site.
+    """
+
+    name: str
+    multiple_numbers: str
+    privacy_focus: str
+    needs_real_number: str
+    platforms: str
+    notes: str
+
+
+# NOTE: details below are a general snapshot for comparison, not live data.
+# Always confirm current plans, pricing and region support before signing up.
+VOIP_SERVICES: list[VoipService] = [
+    VoipService(
+        name="MySudo",
+        multiple_numbers="Yes (up to 9)",
+        privacy_focus="High",
+        needs_real_number="No",
+        platforms="iOS, Android, web",
+        notes="Privacy-first 'identities'; bundles encrypted email/messaging. Paid.",
+    ),
+    VoipService(
+        name="Hushed",
+        multiple_numbers="Yes",
+        privacy_focus="High",
+        needs_real_number="No",
+        platforms="iOS, Android",
+        notes="Second numbers, subscription or pay-as-you-go; many country options.",
+    ),
+    VoipService(
+        name="Burner",
+        multiple_numbers="Yes",
+        privacy_focus="Medium-High",
+        needs_real_number="No",
+        platforms="iOS, Android",
+        notes="Disposable numbers you can rotate/'burn'; US & Canada focus.",
+    ),
+    VoipService(
+        name="Google Voice",
+        multiple_numbers="No (one)",
+        privacy_focus="Low-Medium",
+        needs_real_number="Yes (links an existing number)",
+        platforms="iOS, Android, web",
+        notes="Free for personal US use, but tied to your Google identity.",
+    ),
+]
+
+
+def render_voip_table(services: list[VoipService] | None = None) -> str:
+    """Render the VoIP options as an aligned plain-text table."""
+
+    services = services if services is not None else VOIP_SERVICES
+    headers = [
+        "Service",
+        "Multiple #",
+        "Privacy",
+        "Needs real #?",
+        "Platforms",
+        "Notes",
+    ]
+    rows = [
+        [
+            s.name,
+            s.multiple_numbers,
+            s.privacy_focus,
+            s.needs_real_number,
+            s.platforms,
+            s.notes,
+        ]
+        for s in services
+    ]
+
+    # Compute each column's width from the widest cell (header or value).
+    widths = [len(h) for h in headers]
+    for row in rows:
+        for i, cell in enumerate(row):
+            widths[i] = max(widths[i], len(cell))
+
+    def fmt(cells: list[str]) -> str:
+        return "  ".join(cell.ljust(widths[i]) for i, cell in enumerate(cells))
+
+    lines = [fmt(headers), "  ".join("-" * w for w in widths)]
+    lines += [fmt(row) for row in rows]
+    lines.append("")
+    lines.append(
+        "Details change often — confirm current plans, pricing and region "
+        "support on each provider's site before signing up."
+    )
+    return "\n".join(lines) + "\n"
