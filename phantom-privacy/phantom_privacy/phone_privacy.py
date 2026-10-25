@@ -121,6 +121,7 @@ class VoipService:
     privacy_focus: str
     needs_real_number: str
     platforms: str
+    price: str
     notes: str
 
 
@@ -133,7 +134,8 @@ VOIP_SERVICES: list[VoipService] = [
         privacy_focus="High",
         needs_real_number="No",
         platforms="iOS, Android, web",
-        notes="Privacy-first 'identities'; bundles encrypted email/messaging. Paid.",
+        price="Free tier + paid ~$1-15/mo (verify)",
+        notes="Privacy-first 'identities'; bundles encrypted email/messaging.",
     ),
     VoipService(
         name="Hushed",
@@ -141,7 +143,8 @@ VOIP_SERVICES: list[VoipService] = [
         privacy_focus="High",
         needs_real_number="No",
         platforms="iOS, Android",
-        notes="Second numbers, subscription or pay-as-you-go; many country options.",
+        price="Pay-as-you-go from ~$2; subs ~$5/mo (verify)",
+        notes="Second numbers; many country options.",
     ),
     VoipService(
         name="Burner",
@@ -149,6 +152,7 @@ VOIP_SERVICES: list[VoipService] = [
         privacy_focus="Medium-High",
         needs_real_number="No",
         platforms="iOS, Android",
+        price="Subscription ~$5/mo or ~$48/yr (verify)",
         notes="Disposable numbers you can rotate/'burn'; US & Canada focus.",
     ),
     VoipService(
@@ -157,7 +161,8 @@ VOIP_SERVICES: list[VoipService] = [
         privacy_focus="Low-Medium",
         needs_real_number="Yes (links an existing number)",
         platforms="iOS, Android, web",
-        notes="Free for personal US use, but tied to your Google identity.",
+        price="Free (personal US); Workspace plans paid (verify)",
+        notes="Tied to your Google identity.",
     ),
 ]
 
@@ -172,6 +177,7 @@ def render_voip_table(services: list[VoipService] | None = None) -> str:
         "Privacy",
         "Needs real #?",
         "Platforms",
+        "Price (verify)",
         "Notes",
     ]
     rows = [
@@ -181,6 +187,7 @@ def render_voip_table(services: list[VoipService] | None = None) -> str:
             s.privacy_focus,
             s.needs_real_number,
             s.platforms,
+            s.price,
             s.notes,
         ]
         for s in services
