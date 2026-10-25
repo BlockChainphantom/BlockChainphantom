@@ -1,0 +1,100 @@
+<!doctype html>
+<!--
+  Walker logger: records where you walk using the phone's AR tracking (WebXR),
+  plus the positions of your ESPresense nodes, in one coordinate frame.
+
+  EXPERIMENTAL - not tested on a device by the author of rfhome.
+  Needs Android + Chrome with ARCore (iOS Safari has no WebXR AR), and must be
+  served over HTTPS or from localhost (e.g. `python -m http.server` + `adb reverse`).
+
+  Output: trajectory.csv (t,x,y in unix seconds / metres) and nodes.json.
+  Use them with:  python -m rfhome join --raw raw.csv --traj trajectory.csv --nodes nodes.json --walker <id>
+-->
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RF Walker Logger</title>
+<style>
+  :root { --bg: #f6f5f1; --fg: #1d1d1d; --btn: #2d6cdf; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #16181b; --fg: #eee; } }
+  :root[data-theme="dark"] { --bg: #16181b; --fg: #eee; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 16px system-ui, sans-serif; }
+  button { display: block; width: 100%; margin: 10px 0; padding: 14px; font-size: 17px; border: 0; border-radius: 10px; background: var(--btn); color: #fff; }
+  #overlay { padding: 12px; color: #fff; text-shadow: 0 0 4px #000; }
+  #overlay button { background: #000a; }
+  #status { white-space: pre-line; }
+</style>
+</head>
+<body>
+<h1>RF Walker Logger</h1>
+<p>1. Start på et fast punkt (f.eks. inngangsdøra), telefonen holdt foran deg.<br>
+2. Gå til hver ESPresense-node, hold telefonen inntil den og trykk «Merk node».<br>
+3. Gå sakte (≈0,5 m/s) gjennom alle rom, langs veggene og i baner over gulvet.<br>
+4. Trykk «Stopp og last ned».</p>
+<button id="start">Start AR-sporing</button>
+<div id="status"></div>
+<div id="overlay" hidden>
+  <div id="live"></div>
+  <input id="nodeid" placeholder="node-id (f.eks. stue)" style="width:100%;padding:10px;font-size:16px;box-sizing:border-box">
+  <button id="mark">Merk node her</button>
+  <button id="stop">Stopp og last ned</button>
+</div>
+<script>
+const traj = [], nodes = {};
+let session = null, refSpace = null, last = 0, current = null;
+const $ = id => document.getElementById(id);
+
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], {type: "text/plain"}));
+  a.download = name; a.click();
+}
+
+function finish() {
+  const csv = "t,x,y\n" + traj.map(r => r.map(v => v.toFixed(3)).join(",")).join("\n") + "\n";
+  download("trajectory.csv", csv);
+  setTimeout(() => download("nodes.json", JSON.stringify(nodes, null, 2)), 500);
+  $("status").textContent = `Lagret ${traj.length} posisjoner og ${Object.keys(nodes).length} noder.`;
+}
+
+$("start").onclick = async () => {
+  if (!navigator.xr || !(await navigator.xr.isSessionSupported("immersive-ar"))) {
+    $("status").textContent = "WebXR AR støttes ikke her (krever Android + Chrome + ARCore, over HTTPS).";
+    return;
+  }
+  session = await navigator.xr.requestSession("immersive-ar", {
+    requiredFeatures: ["local"], optionalFeatures: ["dom-overlay"], domOverlay: {root: $("overlay")},
+  });
+  $("overlay").hidden = false;
+  const gl = document.createElement("canvas").getContext("webgl", {xrCompatible: true});
+  session.updateRenderState({baseLayer: new XRWebGLLayer(session, gl)});
+  refSpace = await session.requestReferenceSpace("local");
+  session.addEventListener("end", () => { $("overlay").hidden = true; finish(); });
+  session.requestAnimationFrame(onFrame);
+};
+
+function onFrame(time, frame) {
+  session.requestAnimationFrame(onFrame);
+  const pose = frame.getViewerPose(refSpace);
+  if (!pose || pose.emulatedPosition) return;     // tracking lost: do not log guesses
+  const p = pose.transform.position;
+  // WebXR: y is up, -z is forward at start. Floor plan: x right, y = -z.
+  current = [p.x, -p.z];
+  if (time - last > 200) {                         // 5 Hz
+    last = time;
+    traj.push([Date.now() / 1000, p.x, -p.z]);
+    $("live").textContent = `x ${p.x.toFixed(2)}  y ${(-p.z).toFixed(2)}  · ${traj.length} punkter`;
+  }
+}
+
+$("mark").onclick = () => {
+  const id = $("nodeid").value.trim();   // prompt() is not reliable inside an immersive session
+  if (!current || !id) return;
+  nodes[id] = [+current[0].toFixed(3), +current[1].toFixed(3)];
+  $("nodeid").value = "";
+};
+$("stop").onclick = () => session && session.end();
+</script>
+</body>
+</html>

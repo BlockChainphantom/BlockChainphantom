@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RF Home Model</title>
+<style>
+:root{--bg:#f4f3ef;--fg:#222;--panel:#ffffffdd}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--fg:#e8e8e8;--panel:#1f2226dd}}
+:root[data-theme="dark"]{--bg:#15171a;--fg:#e8e8e8;--panel:#1f2226dd}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;overflow:hidden}
+#info{position:absolute;top:12px;left:12px;max-width:min(320px,calc(100% - 48px));background:var(--panel);padding:10px 12px;border-radius:8px}
+#info h1{font-size:15px;margin:0 0 6px} #info ul{margin:4px 0 0;padding-left:18px}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+"three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head><body><div id="info"><h1>Rekonstruert hjem</h1><div id="sum"></div><ul id="rooms"></ul></div>
+<script type="module">
+import * as THREE from "three";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+const PLAN = {"height": 2.4, "walls": [{"x0": 0.09894935107438971, "y0": 8.272016623580898, "x1": 10.946580480442572, "y1": 7.931116081769237, "loss_db": 0.0, "exterior": true}, {"x0": -0.15992933508559182, "y0": 0.03436326053511693, "x1": 0.09894935107438971, "y1": 8.272016623580898, "loss_db": 0.0, "exterior": true}, {"x0": -0.15992933508559182, "y0": 0.03436326053511693, "x1": 10.687701794282589, "y1": -0.3065372812765433, "loss_db": 0.0, "exterior": true}, {"x0": 10.687701794282589, "y0": -0.3065372812765433, "x1": 10.946580480442572, "y1": 7.931116081769237, "loss_db": 0.0, "exterior": true}, {"x0": 5.747306845295873, "y0": -0.15127911525045942, "x1": 6.006185531455855, "y1": 8.086374247795321, "loss_db": 5.2, "exterior": false}, {"x0": 2.4208186979741533, "y0": 5.14584975393387, "x1": 8.417858060168543, "y1": 4.957385199465102, "loss_db": 4.0, "exterior": false}, {"x0": 3.7705198916861757, "y0": 4.793205461465994, "x1": 3.876115568907267, "y1": 8.153314393129323, "loss_db": 4.0, "exterior": false}, {"x0": 9.01327777134453, "y0": 4.802212492673468, "x1": 10.846440273846639, "y1": 4.744603040169142, "loss_db": 3.0, "exterior": false}, {"x0": 6.584441721592548, "y0": 7.1059592451833105, "x1": 6.614651577026132, "y1": 8.067252431968884, "loss_db": 5.0, "exterior": false}, {"x0": 5.940331117277572, "y0": 5.990852810808837, "x1": 6.848649130957568, "y1": 5.962307767258962, "loss_db": 2.6, "exterior": false}, {"x0": -0.0003641743310762724, "y0": 5.1118090039907145, "x1": 0.8181506575359959, "y1": 5.086086139124031, "loss_db": 2.2, "exterior": false}], "doors": [{"wall": 4, "center": 3.45, "width": 0.9}, {"wall": 4, "center": 6.74, "width": 0.9}, {"wall": 5, "center": 4.19, "width": 0.9}, {"wall": 9, "center": 0.45, "width": 0.9}], "rooms": [{"name": "soverom+stue", "polygon": [[2.892690543308326, 8.222470883115067], [1.9431593109608807, 8.252311104239288], [1.8869018311269687, 8.05398033012005], [1.1372719108526699, 8.077538399428645], [1.093578734650009, 8.279010249455697], [0.3439488143757102, 8.302568318764294], [0.31346426752789436, 8.128439939677246], [0.11199241750084166, 8.084746763474584], [-0.02907411184401648, 5.187748276367868], [0.006766374589112528, 4.736399786249383], [0.20509714870835236, 4.680142306415471], [0.06846034671849505, 0.33228876882453856], [0.2425887258055449, 0.3018042219767227], [0.2620795069760159, 0.12610530493576655], [0.4362078860630656, 0.0956207580879508], [0.4814716002196329, -0.05587576392081536], [3.829818577444834, -0.16110180683254458], [3.88450551932484, -0.012746360731591216], [4.434234127525992, -0.03002227822456166], [4.4794978416825595, -0.18151880023332786], [5.429029074030003, -0.21135902135754955], [5.483716015910011, -0.0630035752565962], [5.7593655889875395, -0.04665386999393811], [5.917989922332086, 5.000854259853006], [3.7948237505318603, 5.092589786903172], [3.860142018872335, 7.966956416931603], [3.536087655730426, 8.002152577641139], [3.5056031088826103, 7.828024198554089], [3.329904191841654, 7.808533417383618], [3.286211015638993, 8.010005267410671], [2.9363837195109865, 8.020999033088016], [2.892690543308326, 8.222470883115067]], "area_m2": 41.12}, {"name": "kjokken", "polygon": [[8.392553928214225, 4.948100295143783], [5.917989922332086, 5.000854259853006], [5.78356798401973, -0.07242680298003465], [5.889800791871928, 0.12433343318529883], [6.239628087999935, 0.11333966750795396], [6.283321264202596, -0.08813218251909868], [6.433247248257455, -0.09284379638081788], [6.489504728091368, 0.10548697773842194], [7.03923333629252, 0.08821106024545147], [7.082926512495181, -0.11326078978160117], [8.032457744842626, -0.1431010109058229], [8.088715224676537, 0.05522976321341694], [8.638443832877691, 0.037953845720446466], [8.682137009080352, -0.16351800430660618], [10.031470865574091, -0.20592252906207914], [10.076734579730656, -0.35741905107084526], [10.226660563785517, -0.3621306649325645], [10.76946269444745, 0.1960949587617139], [10.906099496437307, 4.543948496352646], [10.786658059230263, 4.722788489301415], [9.087496906608518, 4.776186779734233], [8.392553928214225, 4.948100295143783]], "area_m2": 24.79}, {"name": "soverom2", "polygon": [[10.289039090014741, 7.990031265936919], [8.739803921447855, 8.038717942508017], [8.683546441613943, 7.840387168388779], [8.533620457559083, 7.845098782250498], [8.489927281356422, 8.046570632277549], [7.540396049008977, 8.076410853401772], [7.484138569175066, 7.878080079282532], [7.134311273047059, 7.889073844959877], [7.078053793213147, 7.690743070840637], [6.728226497085141, 7.701736836517982], [6.68453332088248, 7.903208686545035], [6.334706024754474, 7.91420245222238], [6.291012848551813, 8.115674302249431], [6.0911115364786665, 8.121956454065057], [5.919560460285992, 5.050829587871294], [10.786658059230263, 4.722788489301415], [10.818713144031985, 4.946892196406752], [10.620382369912743, 5.003149676240664], [10.70047980556197, 7.55189140517328], [10.526351426474923, 7.582375952021096], [10.289039090014741, 7.990031265936919]], "area_m2": 14.42}, {"name": "bad", "polygon": [[5.941185552423806, 8.126668067926776], [3.916399498706248, 8.165287191050844], [3.7948237505318603, 5.092589786903172], [5.919560460285992, 5.050829587871294], [5.941185552423806, 8.126668067926776]], "area_m2": 6.65}], "nodes": [{"id": "stue", "x": 0.3, "y": 0.3}, {"id": "stue2", "x": 5.7, "y": 4.7}, {"id": "kjokken", "x": 10.7, "y": 0.3}, {"id": "soverom", "x": 0.3, "y": 7.7}, {"id": "bad", "x": 5.0, "y": 7.7}, {"id": "soverom2", "x": 10.7, "y": 7.7}]};
+const scene = new THREE.Scene();
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(devicePixelRatio); renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const cam = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 500);
+const ctl = new OrbitControls(cam, renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x666655, 1.4));
+const sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(5, 12, 8); scene.add(sun);
+const H = PLAN.height, T = 0.1, DH = Math.min(2.05, H);
+const wallMat = new THREE.MeshStandardMaterial({color:0xe9e7e1, roughness:0.9});
+const extMat = new THREE.MeshStandardMaterial({color:0xcfcac0, roughness:0.9});
+function slab(ax, ay, bx, by, z0, z1, mat){
+  const L = Math.hypot(bx-ax, by-ay); if (L < 1e-3 || z1 <= z0) return;
+  const m = new THREE.Mesh(new THREE.BoxGeometry(L, z1-z0, T), mat);
+  m.position.set((ax+bx)/2, (z0+z1)/2, -(ay+by)/2); m.rotation.y = Math.atan2(by-ay, bx-ax); scene.add(m);
+}
+PLAN.walls.forEach((w, i) => {
+  const L = Math.hypot(w.x1-w.x0, w.y1-w.y0); if (!L) return;
+  const ux = (w.x1-w.x0)/L, uy = (w.y1-w.y0)/L, mat = w.exterior ? extMat : wallMat;
+  const gaps = PLAN.doors.filter(d => d.wall === i).map(d => [Math.max(0, d.center-d.width/2), Math.min(L, d.center+d.width/2)]).sort((a,b)=>a[0]-b[0]);
+  let s = 0;
+  for (const [g0, g1] of [...gaps, [L, L]]) {
+    if (g0 > s) slab(w.x0+ux*s, w.y0+uy*s, w.x0+ux*g0, w.y0+uy*g0, 0, H, mat);
+    if (g1 > g0) slab(w.x0+ux*g0, w.y0+uy*g0, w.x0+ux*g1, w.y0+uy*g1, DH, H, mat);
+    s = Math.max(s, g1);
+  }
+});
+const hues = [0.08, 0.33, 0.58, 0.75, 0.95, 0.15, 0.45];
+const roomsEl = document.getElementById("rooms");
+PLAN.rooms.forEach((r, k) => {
+  const shape = new THREE.Shape(r.polygon.map(([x, y]) => new THREE.Vector2(x, y)));
+  const m = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL(hues[k % hues.length], 0.35, 0.7), side: THREE.DoubleSide}));
+  m.rotation.x = -Math.PI/2; scene.add(m);
+  const li = document.createElement("li"); li.textContent = `${r.name}: ${r.area_m2.toFixed(1)} m²`; roomsEl.appendChild(li);
+});
+(PLAN.nodes || []).forEach(n => {
+  const s = new THREE.Mesh(new THREE.SphereGeometry(0.12), new THREE.MeshStandardMaterial({color:0xd04040}));
+  s.position.set(n.x, 1.0, -n.y); scene.add(s);
+});
+const total = PLAN.rooms.reduce((a, r) => a + r.area_m2, 0);
+document.getElementById("sum").textContent = `${PLAN.rooms.length} rom, ${total.toFixed(1)} m², ${PLAN.walls.length} vegger, ${PLAN.doors.length} døråpninger`;
+const box = new THREE.Box3().setFromObject(scene), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3()).length();
+ctl.target.copy(c); cam.position.set(c.x + sz*0.4, sz*0.8, c.z + sz*0.7); ctl.update();
+addEventListener("resize", () => { cam.aspect = innerWidth/innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+renderer.setAnimationLoop(() => { ctl.update(); renderer.render(scene, cam); });
+</script></body></html>
